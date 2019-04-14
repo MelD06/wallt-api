@@ -2,8 +2,13 @@ const express =  require('express');
 const router = express.Router();
 
 router.post('/', (req, res, next) => {
+    const transaction = {
+        name: req.body.name, //Manages the name json value to import to database
+        value: req.body.value
+    };
     res.status(201).json({
-        message: "answer post"
+        message: "answer post transaction",
+        transaction: transaction
     });
 });
 
@@ -27,5 +32,4 @@ router.delete('/:transaction', (req, res, next) => {
         message: "deleted " + account
     });
 });
-
 module.exports = router;
