@@ -6,11 +6,26 @@ const Account = require('../schemas/accounts');
 
 router.get('/', (req, res, next) => {
     Account.find()
+    .select('_id name type')
     .exec()
     .then(docs => {
-        console.log(docs);
         if(docs.length >= 0){
-            res.status(200).json(docs);
+            const response = {
+                count: docs.length,
+                accounts: docs.map(doc => {
+                    return {
+                        id: doc._id,
+                        name: doc.name,
+                        type: doc.type,
+                        request: {
+                            type: 'GET', 
+                            url: 'http://' + process.env.SRV_URL + ':' + process.env.SRV_PORT + '/accounts/' + doc._id
+                        }
+                    }
+                })
+            };
+
+            res.status(200).json(response);
         } else {
             res.status(404).json({error: "No entries."});
         }
@@ -30,7 +45,15 @@ router.post('/', (req, res, next) => {
         console.log(result);
         res.status(201).json({
             message: "Account created",
-            account: result
+            account: {
+                id: result._id,
+                name: result.name,
+                type: result.type,
+                request: {
+                    type: 'GET', 
+                    url: 'http://' + process.env.SRV_URL + ':' + process.env.SRV_PORT + '/accounts/' + result._id
+                }
+            }
         });
     })
     .catch(err => {
@@ -44,6 +67,7 @@ router.post('/', (req, res, next) => {
 router.get('/:account', (req, res, next) => {
     const id = req.params.account;
     Account.findById(id)
+    .select('_id name type')
     .exec()
     .then(doc => {
         if(doc){
@@ -63,9 +87,16 @@ router.patch('/:account', (req, res, next) => {
     for(const ops of req.body){
         updateOps[ops.propName] = ops.value;
     }
-    Account.update({_id: id}, { $set: updateOps }).exec()
+    Account.updateMany({_id: id}, { $set: updateOps }).exec()
     .then(res => {
-        res.status(200).json(res);
+        console.log(res);
+        res.status(200).json({
+            message: 'Account Updated',
+            request: {
+                type: 'GET', 
+                url: 'http://' + process.env.SRV_URL + ':' + process.env.SRV_PORT + '/accounts/' + res._id
+            }
+        });
     })
     .catch(err => {
         res.status(500).json({error: err});
@@ -76,7 +107,14 @@ router.delete('/:account', (req, res, next) => {
     const id = req.params.account;
     Account.remove({_id:id}).exec()
     .then(result => {
-        res.status(200).json(result);
+        res.status(200).json({
+            message: 'Account deleted',
+            request: {
+                type: 'POST',
+                url: 'http://' + process.env.SRV_URL + ':' + process.env.SRV_PORT + '/accounts/',
+                body: { name: 'String', type: 'String'}
+            }
+        });
     })
     .catch(err => {
         res.status(500).json({error: err});
