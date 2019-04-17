@@ -12,6 +12,7 @@ mongoose.connect(process.env.MONGODB, {
 
 const accountsRoutes = require('./api/routes/accounts');
 const transactionsRoutes = require('./api/routes/transactions');
+const userRoutes = require('./api/routes/user');
 
 app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({extended: false}));
@@ -29,6 +30,7 @@ app.use((req, res, next) => {
 
 app.use('/accounts', accountsRoutes);
 app.use('/transactions', transactionsRoutes);
+app.use('/user', userRoutes);
 
 //Only handles route errors
 app.use((req, res, next) => {
