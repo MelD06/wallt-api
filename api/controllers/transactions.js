@@ -10,6 +10,11 @@ exports.transactions_add = (req, res, next) => {
                 message: 'Account doesn\'t exist'
             });
         }
+        if(account.user != req.userData.userId) {
+            return res.status(401).json({
+                message: 'Unauthorized'
+            });
+        }
         const transaction = new Transaction({
             _id: mongoose.Types.ObjectId(),
             name: req.body.name,
@@ -33,12 +38,66 @@ exports.transactions_add = (req, res, next) => {
     });
 }
 
+/**************************************
+ * Note : The following route has been
+ * deactivated due to the incongruence of
+ * fetching all transactions from all
+ * accounts at the same time. The code is
+ * left as is in case it might prove useful
+ * in the future
+ *************************************** */
+
+/*
 exports.transactions_getAll = (req, res, next) => {
     Transaction.find()
     .select('_id name value date account')
     .exec()
     .then(docs => {
         if(docs.length >= 0){
+            const response = {
+                count: docs.length,
+                transactions: docs.map(doc => {
+                    return {
+                        id: doc._id,
+                        name: doc.name,
+                        value: doc.value,
+                        date: doc.date,
+                        account: doc.account,
+                        request: {
+                            type: 'GET', 
+                            url: 'http://' + process.env.SRV_URL + ':' + process.env.SRV_PORT + '/accounts/' + doc.account
+                        }
+                    }
+                })
+            };
+
+            res.status(200).json(response);
+        } else {
+            res.status(404).json({error: "No entries."});
+        }
+    })
+    .catch(err => {
+        res.status(500).json({error: err});
+    })
+}
+*/
+
+exports.transactions_getAccount = (req, res, next) => {
+    Transaction.find({account: req.params.accountId})
+    .select('_id name value date account')
+    .exec()
+    .then(docs => {
+        if(docs.length >= 0){
+            const checkAccount = Account.findById(req.params.accountId).then( result => {
+                if(result.user != req.userData.userId){
+                    return res.status(401).json({
+                        message: 'Unauthorized'
+                    });
+                }
+            }).catch(err => {
+                res.status(500).json({error: err});
+            });
+           
             const response = {
                 count: docs.length,
                 transactions: docs.map(doc => {
@@ -73,6 +132,15 @@ exports.transactions_getOne = (req, res, next) => {
                 err: 'Transaction not found'
             });
         }
+        Account.findById(transaction.account).then(result => {
+            if(result.user != req.userData.userId){
+                return res.status(401).json({
+                    message: 'Unauthorized'
+                });
+            }
+        }).catch(err => {
+            res.status(500).json({error: err});
+        });
         res.status(200).json({
             transaction: transaction,
             request: {
@@ -88,6 +156,7 @@ exports.transactions_getOne = (req, res, next) => {
     );
 }
 
+//TODO: Implement
 exports.transactions_update = (req, res, next) => {
     const account = req.params.account;
     res.status(200).json({
@@ -97,6 +166,20 @@ exports.transactions_update = (req, res, next) => {
 
 exports.transactions_delete = (req, res, next) => {
     const id = req.params.transaction;
+    Transaction.findById(id).then(transaction => {
+        Account.findById(transaction.account).then(result => {
+            if(result.user != req.userData.userId){
+                return res.status(401).json({
+                    message: 'Unauthorized'
+                });
+            }
+        }).catch(err => {
+            res.status(500).json({error: err});
+        });
+    }).catch(err => {
+        res.status(500).json({error: err});
+    });
+    
     Transaction.remove({_id:id}).exec()
     .then(result => {
         res.status(200).json({

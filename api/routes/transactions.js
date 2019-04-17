@@ -6,12 +6,14 @@ const transactionsController = require('../controllers/transactions');
 
 router.post('/', authCheck, transactionsController.transactions_add);
 
-router.get('/', transactionsController.transactions_getAll);
+//router.get('/', authCheck, transactionsController.transactions_getAll);
 
-router.get('/:transaction', transactionsController.transactions_getOne);
+router.get('/account/:accountId', authCheck, transactionsController.transactions_getAccount);
 
-router.patch('/:transaction', transactionsController.transactions_update);
+router.get('/:transaction', authCheck, transactionsController.transactions_getOne);
 
-router.delete('/:transaction', transactionsController.transactions_delete);
+router.patch('/:transaction', authCheck, transactionsController.transactions_update);
+
+router.delete('/:transaction', authCheck, transactionsController.transactions_delete);
 
 module.exports = router;
