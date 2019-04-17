@@ -1,16 +1,18 @@
 const express =  require('express');
 const router = express.Router();
 
+const authCheck = require('../middleware/auth-check');
+
 const accountsController = require('../controllers/accounts');
 
-router.get('/', accountsController.accounts_get_all);
+router.get('/', authCheck, accountsController.accounts_get_all);
 
-router.post('/', accountsController.accounts_add);
+router.post('/', authCheck, accountsController.accounts_add);
 
-router.get('/:account', accountsController.accounts_getOne);
+router.get('/:account', authCheck, accountsController.accounts_getOne);
 
-router.patch('/:account', accountsController.accounts_update);
+router.patch('/:account', authCheck, accountsController.accounts_update);
 
-router.delete('/:account', accountsController.accounts_delete);
+router.delete('/:account', authCheck, accountsController.accounts_delete);
 
 module.exports = router;
