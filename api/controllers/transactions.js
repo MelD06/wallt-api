@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const Account = require('../schemas/accounts'); 
 const Transaction = require('../schemas/transactions');
 
-const defaultError = require('../tools/default-error');
+const errorOutput = require('../tools/default-error');
 
 exports.transactions_add = (req, res, next) => {
     Account.findById(req.body.account).then(account => {
@@ -13,9 +13,7 @@ exports.transactions_add = (req, res, next) => {
             });
         }
         if(account.user != req.userData.userId) {
-            return res.status(401).json({
-                message: 'Unauthorized'
-            });
+            errorOutput.unauthorizedError;
         }
         const transaction = new Transaction({
             _id: mongoose.Types.ObjectId(),
@@ -32,7 +30,7 @@ exports.transactions_add = (req, res, next) => {
             newTransaction: result
         });
     })
-    .catch(defaultError);
+    .catch(err => {errorOutput.defaultError(res, err)});
 }
 
 /**************************************
@@ -87,11 +85,9 @@ exports.transactions_getAccount = (req, res, next) => {
         if(docs.length >= 0){
             const checkAccount = Account.findById(req.params.accountId).then( result => {
                 if(result.user != req.userData.userId){
-                    return res.status(401).json({
-                        message: 'Unauthorized'
-                    });
+                    errorOutput.unauthorizedError;
                 }
-            }).catch(defaultError);
+            }).catch(err => {errorOutput.defaultError(res, err)});
            
             const response = {
                 count: docs.length,
@@ -115,7 +111,7 @@ exports.transactions_getAccount = (req, res, next) => {
             res.status(404).json({error: "No entries."});
         }
     })
-    .catch(defaultError);
+    .catch(err => {errorOutput.defaultError(res, err)});
 }
 
 exports.transactions_getOne = (req, res, next) => {
@@ -127,11 +123,9 @@ exports.transactions_getOne = (req, res, next) => {
         }
         Account.findById(transaction.account).then(result => {
             if(result.user != req.userData.userId){
-                return res.status(401).json({
-                    message: 'Unauthorized'
-                });
+                errorOutput.unauthorizedError;
             }
-        }).catch(defaultError);
+        }).catch(err => { errorOutput.defaultError(res, err)});
         res.status(200).json({
             transaction: transaction,
             request: {
@@ -139,15 +133,33 @@ exports.transactions_getOne = (req, res, next) => {
                 url: 'http://' + process.env.SRV_URL + ':' + process.env.SRV_PORT + '/transaction/' + transaction._id
             }
         });
-    }).catch(defaultError);
+    }).catch(err => {errorOutput.defaultError(res, err)});
 }
 
 //TODO: Implement
 exports.transactions_update = (req, res, next) => {
-    const account = req.params.account;
-    res.status(200).json({
-        message: "updated " + account
-    });
+    const updateOps = {};
+    for(const ops of req.body){
+        updateOps[ops.propName] = ops.value;
+    }
+    const testingTransaction = Transaction.findById(req.body.id);
+    const testingAccount = Account.findById(testingTransaction.account);
+    if(req.userData.userId == testingAccount.user){
+        Transaction.updateMany({_id: id}, { $set: updateOps }).exec()
+    .then(res => {
+        console.log(res);
+        res.status(200).json({
+            message: 'Transaction Updated',
+            request: {
+                type: 'GET', 
+                url: 'http://' + process.env.SRV_URL + ':' + process.env.SRV_PORT + '/accounts/' + res._id
+            }
+        });
+    })
+    .catch(err => {errorOutput.defaultError(res, err)});
+    } else {
+       errorOutput.unauthorizedError;
+    }
 }
 
 exports.transactions_delete = (req, res, next) => {
@@ -155,12 +167,10 @@ exports.transactions_delete = (req, res, next) => {
     Transaction.findById(id).then(transaction => {
         Account.findById(transaction.account).then(result => {
             if(result.user != req.userData.userId){
-                return res.status(401).json({
-                    message: 'Unauthorized'
-                });
+                errorOutput.unauthorizedError;
             }
         });
-    }).catch(defaultError);
+    }).catch(err => {errorOutput.defaultError(res, err)});
     
     Transaction.remove({_id:id}).exec()
     .then(result => {
@@ -176,5 +186,5 @@ exports.transactions_delete = (req, res, next) => {
             }
         });
     })
-    .catch(defaultError);
+    .catch(err => {errorOutput.defaultError(res, err)});
 }

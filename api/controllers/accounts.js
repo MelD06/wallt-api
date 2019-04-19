@@ -1,7 +1,7 @@
 const Account = require('../schemas/accounts');
 const mongoose = require('mongoose');
 
-const defaultError = require('../tools/default-error');
+const errorOutput = require('../tools/default-error');
 
 exports.accounts_get_all = (req, res, next) => {
     Account.find({ user: req.userData.userId})
@@ -29,7 +29,7 @@ exports.accounts_get_all = (req, res, next) => {
             res.status(404).json({error: "No entries."});
         }
     })
-    .catch(defaultError);
+    .catch(err => {errorOutput.defaultError(res, err)});
 }
 
 exports.accounts_add = (req, res, next) => {
@@ -56,29 +56,36 @@ exports.accounts_add = (req, res, next) => {
             }
         });
     })
-    .catch(defaultError);
+    .catch(err => {errorOutput.defaultError(res, err)});
 
 }
 
 exports.accounts_getOne = (req, res, next) => {
     const id = req.params.account;
     Account.findById(id)
-    .select('_id name type user')
+    .select('_id name type date user')
     .exec()
     .then(doc => {
         if(doc){
              if(doc.user == req.userData.userId){
-                res.status(200).json(doc); //TODO: Improve response   
+                res.status(200).json({
+                    id: doc._id,
+                    name: doc.name,
+                    type: doc.type,
+                    date: doc.date,
+                    request: {
+                        type: 'GET', 
+                        url: 'http://' + process.env.SRV_URL + ':' + process.env.SRV_PORT + '/transactions/account/:accountId' + doc._id
+                    }
+                }); //TODO: Improve response   
              } else {
-                 res.status(401).json({
-                     message: 'Unauthorized'
-                 })
+                errorOutput.defaultError(res, 'Error fetching document');
              }
         } else {
             res.status(404).json({error: "No entry found for id:"+ id})
-        } //TODO: could be refactored
+        } 
     })
-    .catch(defaultError);
+    .catch(err => {errorOutput.defaultError(res, err)});
 }
 
 exports.accounts_update = (req, res, next) => {
@@ -100,11 +107,9 @@ exports.accounts_update = (req, res, next) => {
             }
         });
     })
-    .catch(defaultError);
+    .catch(err => {errorOutput.defaultError(res, err)});
     } else {
-        res.status(401).json({
-            message: 'Unauthorized'
-        })
+        errorOutput
     }
     
 }
@@ -124,11 +129,9 @@ exports.accounts_delete = (req, res, next) => {
             }
         });
     })
-    .catch(defaultError);
+    .catch(err => {errorOutput.defaultError(res, err)});
     } else {
-        res.status(401).json({
-            message: 'Unauthorized'
-        })
+        errorOutput.unauthorizedError;
     }
     
 }

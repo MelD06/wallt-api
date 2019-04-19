@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
 
+const outputError = require('../tools/default-error');
+
 module.exports = (req, res, next) => {
     try{
         const token = req.headers.authorization.split(" ")[1]; //Access token in "Bearer [token]" format
@@ -7,8 +9,6 @@ module.exports = (req, res, next) => {
         req.userData = decoded;
         next();
     } catch (error) {
-        return res.status(401).json({
-            message: 'Auth failed'
-        });
+        outputError.unauthorizedError(res);
     }
 };
