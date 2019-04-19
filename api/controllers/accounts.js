@@ -1,6 +1,7 @@
 const Account = require('../schemas/accounts');
 const mongoose = require('mongoose');
 
+const defaultError = require('../tools/default-error');
 
 exports.accounts_get_all = (req, res, next) => {
     Account.find({ user: req.userData.userId})
@@ -28,9 +29,7 @@ exports.accounts_get_all = (req, res, next) => {
             res.status(404).json({error: "No entries."});
         }
     })
-    .catch(err => {
-        res.status(500).json({error: err});
-    });
+    .catch(defaultError);
 }
 
 exports.accounts_add = (req, res, next) => {
@@ -57,11 +56,7 @@ exports.accounts_add = (req, res, next) => {
             }
         });
     })
-    .catch(err => {
-        res.status(500).json({
-            error: err
-        });
-    }); //Saves in database, chaining promises
+    .catch(defaultError);
 
 }
 
@@ -83,9 +78,7 @@ exports.accounts_getOne = (req, res, next) => {
             res.status(404).json({error: "No entry found for id:"+ id})
         } //TODO: could be refactored
     })
-    .catch(err => {
-        res.status(500).json({error: err});
-    });
+    .catch(defaultError);
 }
 
 exports.accounts_update = (req, res, next) => {
@@ -107,9 +100,7 @@ exports.accounts_update = (req, res, next) => {
             }
         });
     })
-    .catch(err => {
-        res.status(500).json({error: err});
-    });
+    .catch(defaultError);
     } else {
         res.status(401).json({
             message: 'Unauthorized'
@@ -133,9 +124,7 @@ exports.accounts_delete = (req, res, next) => {
             }
         });
     })
-    .catch(err => {
-        res.status(500).json({error: err});
-    });
+    .catch(defaultError);
     } else {
         res.status(401).json({
             message: 'Unauthorized'

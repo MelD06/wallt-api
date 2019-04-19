@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const User = require('../schemas/user');
+const defaultError = require('../tools/default-error');
 
 exports.user_signup = (req, res, next) => {
     User.find({email: req.body.email}).exec().then(user => {  
@@ -27,12 +28,7 @@ exports.user_signup = (req, res, next) => {
                             res.status(201).json({
                                 message: 'User Created'
                             });
-                        }).catch(err => {
-                            console.log(err);
-                            res.status(500).json({
-                                error: err
-                            });
-                        });
+                        }).catch(defaultError);
                 }
             });
         }
@@ -68,11 +64,7 @@ exports.user_login = (req, res, next) => {
                 
             });
         }
-    }).catch(err => {
-        res.status(500).json({
-            error : err
-        });
-    });
+    }).catch(defaultError);
 }
 
 exports.user_delete = (req,res,next) => {
@@ -80,9 +72,5 @@ exports.user_delete = (req,res,next) => {
         res.status(200).json({
             message: 'User deleted'
         });
-    }).catch(err => {
-        res.status(500).json({
-            error : err
-        });
-    });
+    }).catch(defaultError);
 }

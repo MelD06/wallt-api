@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const Account = require('../schemas/accounts'); 
 const Transaction = require('../schemas/transactions');
 
+const defaultError = require('../tools/default-error');
+
 exports.transactions_add = (req, res, next) => {
     Account.findById(req.body.account).then(account => {
         if (!account){
@@ -30,12 +32,7 @@ exports.transactions_add = (req, res, next) => {
             newTransaction: result
         });
     })
-    .catch(err => {
-        res.status(500).json({
-            message: 'POST Error',
-            error: err
-        })
-    });
+    .catch(defaultError);
 }
 
 /**************************************
@@ -94,9 +91,7 @@ exports.transactions_getAccount = (req, res, next) => {
                         message: 'Unauthorized'
                     });
                 }
-            }).catch(err => {
-                res.status(500).json({error: err});
-            });
+            }).catch(defaultError);
            
             const response = {
                 count: docs.length,
@@ -120,9 +115,7 @@ exports.transactions_getAccount = (req, res, next) => {
             res.status(404).json({error: "No entries."});
         }
     })
-    .catch(err => {
-        res.status(500).json({error: err});
-    })
+    .catch(defaultError);
 }
 
 exports.transactions_getOne = (req, res, next) => {
@@ -138,9 +131,7 @@ exports.transactions_getOne = (req, res, next) => {
                     message: 'Unauthorized'
                 });
             }
-        }).catch(err => {
-            res.status(500).json({error: err});
-        });
+        }).catch(defaultError);
         res.status(200).json({
             transaction: transaction,
             request: {
@@ -148,12 +139,7 @@ exports.transactions_getOne = (req, res, next) => {
                 url: 'http://' + process.env.SRV_URL + ':' + process.env.SRV_PORT + '/transaction/' + transaction._id
             }
         });
-    }).catch( err => {
-        res.status(500).json({
-            error : err
-        });
-    }
-    );
+    }).catch(defaultError);
 }
 
 //TODO: Implement
@@ -173,12 +159,8 @@ exports.transactions_delete = (req, res, next) => {
                     message: 'Unauthorized'
                 });
             }
-        }).catch(err => {
-            res.status(500).json({error: err});
         });
-    }).catch(err => {
-        res.status(500).json({error: err});
-    });
+    }).catch(defaultError);
     
     Transaction.remove({_id:id}).exec()
     .then(result => {
@@ -194,7 +176,5 @@ exports.transactions_delete = (req, res, next) => {
             }
         });
     })
-    .catch(err => {
-        res.status(500).json({error: err});
-    });
+    .catch(defaultError);
 }
